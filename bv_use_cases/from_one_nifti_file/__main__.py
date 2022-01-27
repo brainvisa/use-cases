@@ -15,6 +15,8 @@ capsul = Capsul()
 # environment, possibly on a remote computer).
 executable = capsul.executable('bv_use_cases.simplest.list_directory')
 executable.path = '/'
+executable.single_file = 'path/to/nifti/file'
+executable.output_dir = 'path/to/output/dir' # no explicit database creation
 
 # To be able to run an executable, it is necessary to get a CapsulEngine
 # instance. If this instance is remote, it is also necessary to connect to
