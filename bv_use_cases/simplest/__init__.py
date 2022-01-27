@@ -7,7 +7,7 @@ class ListDirectory(Process):
     Return a list containing the names of the files in the directory.
     '''
     path : directory(doc='directory to list')
-    result : field(List[path()], doc='the output', output=True)
+    result : field(type_=List[path()], doc='the output', output=True)
 
     def execute(self, context):
         self.result = os.listdir(self.path)

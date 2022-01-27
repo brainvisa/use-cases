@@ -22,14 +22,11 @@ executable.path = '/'
 # to separate this two steps; for instance if one only wants to see the engine 
 # configuration. Therefore, a "with" statement must be used to define portion
 # of code requiring a valid connection to the CapsulEngine.
-with capsul.engine() as capsul_engine:
-    # Here we are connected to the Capsul engine and can send command to it
-    execution_id = capsul_engine.start(executable)
-    capsul_engine.wait(execution_id)
-    final_status = capsul_engine.status(execution_id)
-    pprint(final_status)
-    capsul_engine.raise_for_status(final_status)
 
+capsul_engine = capsul.engine()
+with capsul_engine.connect():
+    capsul_engine.run(executable)
+    print(executable.result)
 # Here the connection to the CapsulEngine is closed. The execution_id may not be
 # valid for another connection to the same engine. This is engine implementation
 # dependent.
