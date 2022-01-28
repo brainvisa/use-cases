@@ -1,4 +1,6 @@
 import os
+import time
+
 from soma.controller import path, directory, List, field
 from capsul.api import Process
 
@@ -10,7 +12,7 @@ class ListDirectory(Process):
     result : field(type_=List[path()], doc='the output', output=True)
 
     def execute(self, context):
-        self.result = os.listdir(self.path)
+        self.result = list_directory(self.path)
 
 
 def list_directory(
@@ -19,4 +21,5 @@ def list_directory(
     '''
     Return a list containing the names of the files in the directory.
     '''
+    time.sleep(3)
     return os.listdir(path)
