@@ -137,6 +137,7 @@ try:
         # Add the current TinyMorhpologist pipeline to the main
         # pipeline that will be executed
         processing_pipeline.add_process(f'pipeline_{count}', tiny_morphologist)
+        print('Created', f'pipeline_{count}')
         count = count + 1
     # # Finally execute all the TinyMorphologist instances
     # capsul.run(processing_pipeline)
