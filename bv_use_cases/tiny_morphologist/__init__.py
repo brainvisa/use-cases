@@ -1,4 +1,8 @@
+# -*- coding: utf-8 -*-
+from pathlib import Path
+
 from soma.controller import field, file
+
 from capsul.api import Process, Pipeline
 
 
@@ -7,22 +11,40 @@ class BiasCorrection(Process):
     strength: float = 0.8
     output: field(type_=file(), output=True)
 
-    def execute(self):
+    def execute(self, context):
         with open(self.input) as f:
             content = self.read()
         content = f'{content}\nBias correction with strength={self.strength}'
         with open(self.output, 'w') as f:
             f.write(content)
 
+    path_layout = dict(
+        bids={'output': {'part': 'nobias'}},
+        brainvisa={'output': {'prefix': 'nobias'}}
+    )
+
 class SPMNormalization(Process):
     input: field(type_=file())
     template: field(type_=file())
     output: field(type_=file(), output=True)
+    
+    requirements = {
+        'fakespm': {
+            'version': '12'
+        }
+    }
+    
+    path_layout = dict(
+        bids={'output': {'part': 'normalized'}},
+        brainvisa={'output': {'prefix': 'normalized'}}
+    )
 
-    def execute(self):
+    def execute(self, context):
+        spmdir = Path(context.spm.directory)
+        real_version = (spmdir / 'spm').read_text().strip()
         with open(self.input) as f:
             content = self.read()
-        content = f'{content}\nSPM normalization with template "{self.template}"'
+        content = f'{content}\nNormalization with fakespm {real_version} installed in {spmdir} using template "{self.template}"'
         with open(self.output, 'w') as f:
             f.write(content)
 
@@ -31,10 +53,15 @@ class AimsNormalization(Process):
     origin: field(type_=list[float], default_factory=lambda: [1.2, 3.4, 5.6])
     output: field(type_=file(), output=True)
 
-    def execute(self):
+    path_layout = dict(
+        bids={'output': {'part': 'normalized'}},
+        brainvisa={'output': {'prefix': 'normalized'}}
+    )
+
+    def execute(self, context):
         with open(self.input) as f:
             content = self.read()
-        content = f'{content}\nSPM normalization with origin={self.origin}'
+        content = f'{content}\nNormalization with Aims, origin={self.origin}'
         with open(self.output, 'w') as f:
             f.write(content)
 
@@ -43,7 +70,12 @@ class SplitBrain(Process):
     right_output: field(type_=file(), output=True)
     left_output: field(type_=file(), output=True)
 
-    def execute(self):
+    path_layout = dict(
+        bids={'output': {'part': 'split'}},
+        brainvisa={'output': {'prefix': 'split'}}
+    )
+
+    def execute(self, context):
         with open(self.input) as f:
             content = self.read()
         content = f'{content}\nBias correction with strength={self.strength}'
@@ -55,7 +87,7 @@ class ProcessHemisphere(Process):
     input: field(type_=file())
     output: field(type_=file(), output=True)
 
-    def execute(self):
+    def execute(self, context):
         with open(self.input) as f:
             content = self.read()
         content = f'{content}\nProcess hemisphere'
@@ -85,5 +117,16 @@ class TinyMorphologist(Pipeline):
         self.export_parameter('right_hemi', 'output', 'right_hemisphere')
         self.add_link('split.left_output->left_hemi.input')
         self.export_parameter('left_hemi', 'output', 'left_hemisphere')
+
+    path_layout = dict(
+        bids={
+            '*': {'pipeline': 'tinymorphologist'},
+            'right_hemi': {'part': 'right_hemi'}
+        },
+        brainvisa={
+            '*': {'process': 'tinymorphologist'},
+            'left_hemi': {'prefix': 'left_hemi'}
+        }
+    )
 
 
