@@ -97,12 +97,14 @@ class ProcessHemisphere(Process):
 class TinyMorphologist(Pipeline):
     def pipeline_definition(self):
         self.add_process('nobias', BiasCorrection)
+
         self.add_switch('normalization', ['none', 'spm', 'aims'], ['output'])
         self.add_process('spm_normalization', SPMNormalization)
         self.add_process('aims_normalization', AimsNormalization)
         self.add_process('split', SplitBrain)
         self.add_process('right_hemi', ProcessHemisphere)
         self.add_process('left_hemi', ProcessHemisphere)
+
 
         self.add_link('nobias.output->normalization.none_switch_output')
         
@@ -111,8 +113,11 @@ class TinyMorphologist(Pipeline):
 
         self.add_link('nobias.output->aims_normalization.input')
         self.add_link('aims_normalization.output->normalization.aims_switch_output')
-        
+
+        self.export_parameter('nobias', 'output', 'nobias')
+
         self.add_link('normalization.output->split.input')
+        self.export_parameter('normalization', 'output', 'normalized')
         self.add_link('split.right_output->right_hemi.input')
         self.export_parameter('right_hemi', 'output', 'right_hemisphere')
         self.add_link('split.left_output->left_hemi.input')

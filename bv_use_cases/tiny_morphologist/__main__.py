@@ -131,13 +131,18 @@ try:
         # Complete outputs following BraiVISA organization
         # Make the link between BIDS metadata and BrainVISA metadata 
         output_dataset.set_output_paths(tiny_morphologist,
+            center='whaterver',
             subject=t1_mri['sub'],
-            acquisition=t1_mri.get('acq', 'default'),
+            acquisition=t1_mri['ses'],
+            extension = 'nii'
         )
         # Add the current TinyMorhpologist pipeline to the main
         # pipeline that will be executed
         processing_pipeline.add_process(f'pipeline_{count}', tiny_morphologist)
         print('Created', f'pipeline_{count}')
+        for field in tiny_morphologist.fields():
+            value = getattr(tiny_morphologist, field.name, None)
+            print('   ', ('<-' if tiny_morphologist.is_output(field) else '->'), field.name, '=', value)
         count = count + 1
     # # Finally execute all the TinyMorphologist instances
     # capsul.run(processing_pipeline)
