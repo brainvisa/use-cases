@@ -83,17 +83,23 @@ try:
         'default': {
             'label': 'Local computer',
             'modules': {}
+        },
+        'remote': {
+            'label': 'triscotte',
+            'type': 'ssh',
+            'host': 'triscotte.cea.fr',
+            'modules': {}
         }
     }
     # Create fake SPM directories
     for version in ('8', '12'):
-        spm = tmp / 'software' / f'fakespm-{version}'
-        spm.mkdir(parents=True, exist_ok=True)
+        fakespm = tmp / 'software' / f'fakespm-{version}'
+        fakespm.mkdir(parents=True, exist_ok=True)
         # Write a file containing only the version string that will be used
         # by fakespm module to check installation.
-        (spm / 'spm').write_text(version)
+        (fakespm / 'fakespm').write_text(version)
         fakespm_config = {
-            'directory': str(spm),
+            'directory': str(fakespm),
             'version': version,
         }
         config['default']['modules'].setdefault('fakespm', []).append(fakespm_config)
@@ -125,7 +131,8 @@ try:
     count = 0
     for t1_mri in input_dataset.find(suffix='T1w'):
         # Create a TinyMorphologist pipeline
-        tiny_morphologist = capsul.executable('bv_use_cases.tiny_morphologist.TinyMorphologist')
+        tiny_morphologist = capsul.executable('bv_use_cases.tiny_morphologist.TinyMorphologist',
+                                              normalization='aims')
         # Set the input data
         tiny_morphologist.input = t1_mri['path']
         # Complete outputs following BraiVISA organization
@@ -143,8 +150,10 @@ try:
         for field in tiny_morphologist.fields():
             value = getattr(tiny_morphologist, field.name, None)
             print('   ', ('<-' if tiny_morphologist.is_output(field) else '->'), field.name, '=', value)
+
         count = count + 1
-    # # Finally execute all the TinyMorphologist instances
-    # capsul.run(processing_pipeline)
+    with capsul.engine() as ce:
+      # Finally execute all the TinyMorphologist instances
+      ce.run(processing_pipeline)
 finally:
     shutil.rmtree(tmp)

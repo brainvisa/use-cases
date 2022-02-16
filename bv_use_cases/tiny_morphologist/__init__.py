@@ -9,7 +9,7 @@ from capsul.api import Process, Pipeline
 class BiasCorrection(Process):
     input: field(type_=file())
     strength: float = 0.8
-    output: field(type_=file(), output=True)
+    output: field(type_=file(), write=True)
 
     def execute(self, context):
         with open(self.input) as f:
@@ -23,10 +23,10 @@ class BiasCorrection(Process):
         brainvisa={'output': {'prefix': 'nobias'}}
     )
 
-class SPMNormalization(Process):
+class FakeSPMNormalization(Process):
     input: field(type_=file())
     template: field(type_=file())
-    output: field(type_=file(), output=True)
+    output: field(type_=file(), write=True)
     
     requirements = {
         'fakespm': {
@@ -40,18 +40,18 @@ class SPMNormalization(Process):
     )
 
     def execute(self, context):
-        spmdir = Path(context.spm.directory)
-        real_version = (spmdir / 'spm').read_text().strip()
+        fakespmdir = Path(context.fakespm.directory)
+        real_version = (fakespmdir / 'fakespm').read_text().strip()
         with open(self.input) as f:
             content = self.read()
-        content = f'{content}\nNormalization with fakespm {real_version} installed in {spmdir} using template "{self.template}"'
+        content = f'{content}\nNormalization with fakespm {real_version} installed in {fakespmdir} using template "{self.template}"'
         with open(self.output, 'w') as f:
             f.write(content)
 
 class AimsNormalization(Process):
     input: field(type_=file())
     origin: field(type_=list[float], default_factory=lambda: [1.2, 3.4, 5.6])
-    output: field(type_=file(), output=True)
+    output: field(type_=file(), write=True)
 
     path_layout = dict(
         bids={'output': {'part': 'normalized'}},
@@ -67,8 +67,8 @@ class AimsNormalization(Process):
 
 class SplitBrain(Process):
     input: field(type_=file())
-    right_output: field(type_=file(), output=True)
-    left_output: field(type_=file(), output=True)
+    right_output: field(type_=file(), write=True)
+    left_output: field(type_=file(), write=True)
 
     path_layout = dict(
         bids={'output': {'part': 'split'}},
@@ -85,7 +85,7 @@ class SplitBrain(Process):
 
 class ProcessHemisphere(Process):
     input: field(type_=file())
-    output: field(type_=file(), output=True)
+    output: field(type_=file(), write=True)
 
     def execute(self, context):
         with open(self.input) as f:
@@ -98,18 +98,17 @@ class TinyMorphologist(Pipeline):
     def pipeline_definition(self):
         self.add_process('nobias', BiasCorrection)
 
-        self.add_switch('normalization', ['none', 'spm', 'aims'], ['output'])
-        self.add_process('spm_normalization', SPMNormalization)
+        self.add_switch('normalization', ['none', 'fakespm', 'aims'], ['output'])
+        self.add_process('fakespm_normalization', FakeSPMNormalization)
         self.add_process('aims_normalization', AimsNormalization)
         self.add_process('split', SplitBrain)
         self.add_process('right_hemi', ProcessHemisphere)
         self.add_process('left_hemi', ProcessHemisphere)
 
-
         self.add_link('nobias.output->normalization.none_switch_output')
         
-        self.add_link('nobias.output->spm_normalization.input')
-        self.add_link('spm_normalization.output->normalization.spm_switch_output')
+        self.add_link('nobias.output->fakespm_normalization.input')
+        self.add_link('fakespm_normalization.output->normalization.fakespm_switch_output')
 
         self.add_link('nobias.output->aims_normalization.input')
         self.add_link('aims_normalization.output->normalization.aims_switch_output')
@@ -126,11 +125,13 @@ class TinyMorphologist(Pipeline):
     path_layout = dict(
         bids={
             '*': {'pipeline': 'tinymorphologist'},
-            'right_hemi': {'part': 'right_hemi'}
+            'left_hemisphere': {'part': 'left_hemi'},
+            'right_hemisphere': {'part': 'right_hemi'},
         },
         brainvisa={
             '*': {'process': 'tinymorphologist'},
-            'left_hemi': {'prefix': 'left_hemi'}
+            'left_hemisphere': {'prefix': 'left_hemi'},
+            'right_hemisphere': {'prefix': 'right_hemi'},
         }
     )
 
