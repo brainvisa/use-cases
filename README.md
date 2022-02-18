@@ -35,6 +35,7 @@ The simplest is to use a [casa-distro](https://github.com/brainvisa/casa-distro)
         brainvisa brainvisa-cmake \$CASA_BRANCH
         brainvisa casa-distro \$CASA_BRANCH
         git https://github.com/populse/soma-base.git pydantic_controller soma/soma-base
+        git https://github.com/populse/soma-workflow.git master soma/soma-workflow
         git https://github.com/populse/populse_db.git master populse_db
         git https://github.com/populse/capsul.git pydantic_controller capsul
         git https://github.com/brainvisa/use-cases.git master brainvisa/use-cases
@@ -51,6 +52,7 @@ The simplest is to use a [casa-distro](https://github.com/brainvisa/casa-distro)
         brainvisa brainvisa-cmake \$CASA_BRANCH \$CASA_SRC
         brainvisa casa-distro \$CASA_BRANCH \$CASA_SRC
         + \$CASA_SRC/soma/soma-base
+        + \$CASA_SRC/soma/soma-workflow
         + $CASA_SRC/populse_db
         + \$CASA_SRC/capsul
         + \$CASA_SRC/brainvisa/use-cases
