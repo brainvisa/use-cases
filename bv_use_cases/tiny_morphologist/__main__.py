@@ -7,40 +7,62 @@ import tempfile
 
 from bv_use_cases import tiny_morphologist
 
-from capsul.api import Capsul
+from capsul.api import Capsul, Process
+
+
+# import sys
+# import yaql
+# spms = [
+#     {
+#         'version': 8,
+#         'directory': '/software/spm8',
+#     },
+#     {
+#         'version': 12,
+#         'directory': '/software/spm12',
+#     }
+# ]
+
+# engine = yaql.factory.YaqlFactory().create()
+
+# expression = engine(
+#     '$.where($.version = 12)')
+# selected_spm = expression.evaluate(data=spms)
+# print(selected_spm)
+# sys.exit()
 
 subjects = (
-    'aleksander',
-    'casimiro',
-    'christophorus',
-    'christy',
-    'conchobhar',
-    'cornelia',
-    'dakila',
-    'demosthenes',
-    'devin',
-    'ferit',
-    'gautam',
-    'hikmat',
-    'isbel',
-    'ivona',
-    'jordana',
-    'justyn',
-    'katrina',
-    'lyda',
-    'melite',
-    'mina',
-    'odalric',
-    'rainbow',
-    'rashn',
-    'shufen',
-    'simona',
-    'svanhildur',
-    'thilini',
-    'til',
-    'vanessza',
-    'victoria'
-)
+    'aleksander',)
+#     'casimiro',
+#     'christophorus',
+#     'christy',
+#     'conchobhar',
+#     'cornelia',
+#     'dakila',
+#     'demosthenes',
+#     'devin',
+#     'ferit',
+#     'gautam',
+#     'hikmat',
+#     'isbel',
+#     'ivona',
+#     'jordana',
+#     'justyn',
+#     'katrina',
+#     'lyda',
+#     'melite',
+#     'mina',
+#     'odalric',
+#     'rainbow',
+#     'rashn',
+#     'shufen',
+#     'simona',
+#     'svanhildur',
+#     'thilini',
+#     'til',
+#     'vanessza',
+#     'victoria'
+# )
 
 # Create temporary directory for the use case
 tmp_name = tempfile.mkdtemp()
@@ -124,7 +146,7 @@ try:
     output_dataset = capsul.dataset(brainvisa)
     # Create a main pipeline that will contain all the morphologist pipelines
     # we want to execute
-    processing_pipeline = capsul.custom_pipeline()
+    processing_pipeline = capsul.custom_pipeline(autoexport_nodes_parameters=False)
     # Parse the dataset with BIDS-specific query (here "suffix" is part
     #  of BIDS specification). The object returned contains info for main
     # BIDS fields (sub, ses, acq, etc.)
@@ -149,7 +171,29 @@ try:
         print('Created', f'pipeline_{count}')
         for field in tiny_morphologist.fields():
             value = getattr(tiny_morphologist, field.name, None)
-            print('   ', ('<-' if tiny_morphologist.is_output(field) else '->'), field.name, '=', value)
+            print('   ', ('<-' if field.is_output() else '->'), field.name, '=', value)
+        for node_name, node in tiny_morphologist.nodes.items():
+            if not node_name:
+                continue
+            print('   ', node_name, ':', node)
+            if isinstance(node,Process):
+                for field in node.fields():
+                    value = getattr(node, field.name, None)
+                    print('       ', ('<-' if field.is_output() else '->'), field.name, '=', value)
+
+        import sys
+        sys.stdout.flush()
+        from soma.qt_gui.qt_backend import QtGui
+        from capsul.qt_gui.widgets import PipelineDeveloperView
+
+        app = QtGui.QApplication.instance()
+        if not app:
+            app = QtGui.QApplication(sys.argv)
+        view1 = PipelineDeveloperView(tiny_morphologist)
+        view1.show()
+        app.exec_()
+        del view1
+        sys.exit()
 
         count = count + 1
     with capsul.engine() as ce:

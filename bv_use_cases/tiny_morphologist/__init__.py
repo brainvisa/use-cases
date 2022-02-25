@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
 
-from soma.controller import field, file
+from soma.controller import field, File
 
 from capsul.api import Process, Pipeline
 
 
 class BiasCorrection(Process):
-    input: field(type_=file())
+    input: field(type_=File)
     strength: float = 0.8
-    output: field(type_=file(), write=True)
+    output: field(type_=File, write=True)
 
     def execute(self, context):
         with open(self.input) as f:
@@ -24,9 +24,9 @@ class BiasCorrection(Process):
     )
 
 class FakeSPMNormalization(Process):
-    input: field(type_=file())
-    template: field(type_=file())
-    output: field(type_=file(), write=True)
+    input: field(type_=File)
+    template: field(type_=File)
+    output: field(type_=File, write=True)
     
     requirements = {
         'fakespm': {
@@ -49,9 +49,9 @@ class FakeSPMNormalization(Process):
             f.write(content)
 
 class AimsNormalization(Process):
-    input: field(type_=file())
+    input: field(type_=File)
     origin: field(type_=list[float], default_factory=lambda: [1.2, 3.4, 5.6])
-    output: field(type_=file(), write=True)
+    output: field(type_=File, write=True)
 
     path_layout = dict(
         bids={'output': {'part': 'normalized'}},
@@ -66,9 +66,9 @@ class AimsNormalization(Process):
             f.write(content)
 
 class SplitBrain(Process):
-    input: field(type_=file())
-    right_output: field(type_=file(), write=True)
-    left_output: field(type_=file(), write=True)
+    input: field(type_=File)
+    right_output: field(type_=File, write=True)
+    left_output: field(type_=File, write=True)
 
     path_layout = dict(
         bids={'output': {'part': 'split'}},
@@ -84,8 +84,8 @@ class SplitBrain(Process):
 
 
 class ProcessHemisphere(Process):
-    input: field(type_=file())
-    output: field(type_=file(), write=True)
+    input: field(type_=File)
+    output: field(type_=File, write=True)
 
     def execute(self, context):
         with open(self.input) as f:
