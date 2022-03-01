@@ -8,6 +8,7 @@ import tempfile
 from bv_use_cases import tiny_morphologist
 
 from capsul.api import Capsul, Process
+from capsul.dataset import Completion
 
 
 # import sys
@@ -147,6 +148,15 @@ try:
     # Create a main pipeline that will contain all the morphologist pipelines
     # we want to execute
     processing_pipeline = capsul.custom_pipeline(autoexport_nodes_parameters=False)
+
+    completion = Completion()
+    completion.add_dataset_items({
+        output_dataset: {
+            'TinyMorphologist': ['nobias', 'normalized',
+                                 'right_hemisphere',
+                                 'left_hemisphere']},
+    })
+
     # Parse the dataset with BIDS-specific query (here "suffix" is part
     #  of BIDS specification). The object returned contains info for main
     # BIDS fields (sub, ses, acq, etc.)
@@ -159,7 +169,8 @@ try:
         tiny_morphologist.input = t1_mri['path']
         # Complete outputs following BraiVISA organization
         # Make the link between BIDS metadata and BrainVISA metadata 
-        output_dataset.set_output_paths(tiny_morphologist,
+        #output_dataset.set_output_paths(tiny_morphologist,
+        completion.set_paths(tiny_morphologist,
             center='whaterver',
             subject=t1_mri['sub'],
             acquisition=t1_mri['ses'],
