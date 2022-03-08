@@ -33,11 +33,11 @@ from capsul.dataset import Completion
 # sys.exit()
 
 subjects = (
-    'aleksander',)
-#     'casimiro',
-#     'christophorus',
-#     'christy',
-#     'conchobhar',
+    'aleksander',
+    'casimiro',
+    'christophorus',
+    'christy',
+    'conchobhar',
 #     'cornelia',
 #     'dakila',
 #     'demosthenes',
@@ -63,7 +63,7 @@ subjects = (
 #     'til',
 #     'vanessza',
 #     'victoria'
-# )
+)
 
 # Create temporary directory for the use case
 tmp_name = tempfile.mkdtemp()
@@ -156,11 +156,12 @@ try:
                                  'right_hemisphere',
                                  'left_hemisphere']},
     })
-
+    
     # Parse the dataset with BIDS-specific query (here "suffix" is part
     #  of BIDS specification). The object returned contains info for main
     # BIDS fields (sub, ses, acq, etc.)
     count = 0
+    pipeline_files = []
     for t1_mri in input_dataset.find(suffix='T1w'):
         # Create a TinyMorphologist pipeline
         tiny_morphologist = capsul.executable('bv_use_cases.tiny_morphologist.TinyMorphologist',
@@ -179,36 +180,51 @@ try:
         # Add the current TinyMorhpologist pipeline to the main
         # pipeline that will be executed
         processing_pipeline.add_process(f'pipeline_{count}', tiny_morphologist)
+        
+        pipeline_files.append(tiny_morphologist.right_hemisphere)
+        pipeline_files.append(tiny_morphologist.left_hemisphere)
+        
         print('Created', f'pipeline_{count}')
-        for field in tiny_morphologist.fields():
-            value = getattr(tiny_morphologist, field.name, None)
-            print('   ', ('<-' if field.is_output() else '->'), field.name, '=', value)
-        for node_name, node in tiny_morphologist.nodes.items():
-            if not node_name:
-                continue
-            print('   ', node_name, ':', node)
-            if isinstance(node,Process):
-                for field in node.fields():
-                    value = getattr(node, field.name, None)
-                    print('       ', ('<-' if field.is_output() else '->'), field.name, '=', value)
+        # for field in tiny_morphologist.fields():
+        #     value = getattr(tiny_morphologist, field.name, None)
+        #     print('   ', ('<-' if field.is_output() else '->'), field.name, '=', value)
+        # for node_name, node in tiny_morphologist.nodes.items():
+        #     if not node_name:
+        #         continue
+        #     print('   ', node_name, ':', getattr(node ,'definition', node.__class__.__name__))
+        #     if isinstance(node,Process):
+        #         for field in node.fields():
+        #             value = getattr(node, field.name, None)
+        #             print('       ', ('<-' if field.is_output() else '->'), field.name, '=', value)
 
-        import sys
-        sys.stdout.flush()
-        from soma.qt_gui.qt_backend import QtGui
-        from capsul.qt_gui.widgets import PipelineDeveloperView
+        # import sys
+        # sys.stdout.flush()
+        # from soma.qt_gui.qt_backend import QtGui
+        # from capsul.qt_gui.widgets import PipelineDeveloperView
 
-        app = QtGui.QApplication.instance()
-        if not app:
-            app = QtGui.QApplication(sys.argv)
-        view1 = PipelineDeveloperView(tiny_morphologist)
-        view1.show()
-        app.exec_()
-        del view1
-        sys.exit()
+        # app = QtGui.QApplication.instance()
+        # if not app:
+        #     app = QtGui.QApplication(sys.argv)
+        # view1 = PipelineDeveloperView(tiny_morphologist)
+        # view1.show()
+        # app.exec_()
+        # del view1
+        # sys.exit()
 
         count = count + 1
+   
     with capsul.engine() as ce:
-      # Finally execute all the TinyMorphologist instances
-      ce.run(processing_pipeline)
+        # Finally execute all the TinyMorphologist instances
+        execution_id = ce.run(processing_pipeline)
+        for debug in ce.status(execution_id)['debug_messages']:
+            print('!', debug)
+    
+    for f in pipeline_files:
+        if os.path.exists(f):
+            print('-' * 40)
+            print(f)
+            print('-' * 40)
+            with open(f) as file:
+                print(file.read())
 finally:
     shutil.rmtree(tmp)

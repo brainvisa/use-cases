@@ -12,6 +12,7 @@ class BiasCorrection(Process):
     output: field(type_=File, write=True, extensions=('.nii',))
 
     def execute(self, context):
+        boom
         with open(self.input) as f:
             content = self.read()
         content = f'{content}\nBias correction with strength={self.strength}'
@@ -135,4 +136,11 @@ class TinyMorphologist(Pipeline):
         }
     )
 
-
+def concatenate(inputs: list[File], result: File):
+    with open(result, 'w') as o:
+        for f in inputs:
+            print('-' * 40, file=o)
+            print(f, file=o)
+            print('-' * 40, file=o)
+            with open(f) as i:
+                o.write(i.read())
