@@ -12,10 +12,10 @@ class BiasCorrection(Process):
     output: field(type_=File, write=True, extensions=('.nii',))
 
     def execute(self, context):
-        boom
         with open(self.input) as f:
-            content = self.read()
-        content = f'{content}\nBias correction with strength={self.strength}'
+            content = f.read()
+        content = f'{content}Bias correction with strength={self.strength}\n'
+        Path(self.output).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output, 'w') as f:
             f.write(content)
 
@@ -44,8 +44,8 @@ class FakeSPMNormalization(Process):
         fakespmdir = Path(context.fakespm.directory)
         real_version = (fakespmdir / 'fakespm').read_text().strip()
         with open(self.input) as f:
-            content = self.read()
-        content = f'{content}\nNormalization with fakespm {real_version} installed in {fakespmdir} using template "{self.template}"'
+            content = f.read()
+        content = f'{content}Normalization with fakespm {real_version} installed in {fakespmdir} using template "{self.template}"\n'
         with open(self.output, 'w') as f:
             f.write(content)
 
@@ -61,8 +61,9 @@ class AimsNormalization(Process):
 
     def execute(self, context):
         with open(self.input) as f:
-            content = self.read()
-        content = f'{content}\nNormalization with Aims, origin={self.origin}'
+            content = f.read()
+        content = f'{content}Normalization with Aims, origin={self.origin}\n'
+        Path(self.output).parent.mkdir(parents=True, exist_ok=True)
         with open(self.output, 'w') as f:
             f.write(content)
 
@@ -78,10 +79,13 @@ class SplitBrain(Process):
 
     def execute(self, context):
         with open(self.input) as f:
-            content = self.read()
-        content = f'{content}\nBias correction with strength={self.strength}'
-        with open(self.output, 'w') as f:
-            f.write(content)
+            content = f.read()
+        for side in ('left', 'right'):
+            side_content = f'{content}Split brain side={side}\n'
+            output = getattr(self, f'{side}_output')
+            Path(output).parent.mkdir(parents=True, exist_ok=True)
+            with open(output, 'w') as f:
+                f.write(side_content)
 
 
 class ProcessHemisphere(Process):
@@ -90,8 +94,8 @@ class ProcessHemisphere(Process):
 
     def execute(self, context):
         with open(self.input) as f:
-            content = self.read()
-        content = f'{content}\nProcess hemisphere'
+            content = f.read()
+        content = f'{content}Process hemisphere\n'
         with open(self.output, 'w') as f:
             f.write(content)
 

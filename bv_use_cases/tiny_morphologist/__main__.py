@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+from pprint import pprint
 import shutil
 import tempfile
 
@@ -38,31 +39,31 @@ subjects = (
     'christophorus',
     'christy',
     'conchobhar',
-#     'cornelia',
-#     'dakila',
-#     'demosthenes',
-#     'devin',
-#     'ferit',
-#     'gautam',
-#     'hikmat',
-#     'isbel',
-#     'ivona',
-#     'jordana',
-#     'justyn',
-#     'katrina',
-#     'lyda',
-#     'melite',
-#     'mina',
-#     'odalric',
-#     'rainbow',
-#     'rashn',
-#     'shufen',
-#     'simona',
-#     'svanhildur',
-#     'thilini',
-#     'til',
-#     'vanessza',
-#     'victoria'
+    'cornelia',
+    'dakila',
+    'demosthenes',
+    'devin',
+    'ferit',
+    'gautam',
+    'hikmat',
+    'isbel',
+    'ivona',
+    'jordana',
+    'justyn',
+    'katrina',
+    'lyda',
+    'melite',
+    'mina',
+    'odalric',
+    'rainbow',
+    'rashn',
+    'shufen',
+    'simona',
+    'svanhildur',
+    'thilini',
+    'til',
+    'vanessza',
+    'victoria'
 )
 
 # Create temporary directory for the use case
@@ -147,7 +148,7 @@ try:
     output_dataset = capsul.dataset(brainvisa)
     # Create a main pipeline that will contain all the morphologist pipelines
     # we want to execute
-    processing_pipeline = capsul.custom_pipeline(autoexport_nodes_parameters=False)
+    processing_pipeline = capsul.custom_pipeline()
 
     completion = Completion()
     completion.add_dataset_items({
@@ -181,10 +182,13 @@ try:
         # pipeline that will be executed
         processing_pipeline.add_process(f'pipeline_{count}', tiny_morphologist)
         
+        pipeline_files.append(tiny_morphologist.nobias)
+        pipeline_files.append(tiny_morphologist.normalized)
         pipeline_files.append(tiny_morphologist.right_hemisphere)
         pipeline_files.append(tiny_morphologist.left_hemisphere)
         
         print('Created', f'pipeline_{count}')
+
         # for field in tiny_morphologist.fields():
         #     value = getattr(tiny_morphologist, field.name, None)
         #     print('   ', ('<-' if field.is_output() else '->'), field.name, '=', value)
@@ -196,29 +200,25 @@ try:
         #         for field in node.fields():
         #             value = getattr(node, field.name, None)
         #             print('       ', ('<-' if field.is_output() else '->'), field.name, '=', value)
-
-        # import sys
-        # sys.stdout.flush()
-        # from soma.qt_gui.qt_backend import QtGui
-        # from capsul.qt_gui.widgets import PipelineDeveloperView
-
-        # app = QtGui.QApplication.instance()
-        # if not app:
-        #     app = QtGui.QApplication(sys.argv)
-        # view1 = PipelineDeveloperView(tiny_morphologist)
-        # view1.show()
-        # app.exec_()
-        # del view1
-        # sys.exit()
-
         count = count + 1
    
-    with capsul.engine() as ce:
-        # Finally execute all the TinyMorphologist instances
-        execution_id = ce.run(processing_pipeline)
-        for debug in ce.status(execution_id)['debug_messages']:
-            print('!', debug)
-    
+    # for node_name, node in processing_pipeline.nodes.items():
+    #     if not node_name:
+    #         continue
+    #     print('   ', node_name, ':', getattr(node ,'definition', node.__class__.__name__))
+    #     if isinstance(node,Process):
+    #         for field in node.fields():
+    #             value = getattr(node, field.name, None)
+    #             print('       ', ('<-' if field.is_output() else '->'), field.name, '=', value)
+
+    try:
+        with capsul.engine() as ce:
+            # Finally execute all the TinyMorphologist instances
+            execution_id = ce.run(processing_pipeline)
+    except Exception:
+        import traceback
+        traceback.print_exc()
+
     for f in pipeline_files:
         if os.path.exists(f):
             print('-' * 40)
@@ -226,5 +226,17 @@ try:
             print('-' * 40)
             with open(f) as file:
                 print(file.read())
+
+    import sys
+    sys.stdout.flush()
+    from soma.qt_gui.qt_backend import QtGui
+    from capsul.qt_gui.widgets import PipelineDeveloperView
+    app = QtGui.QApplication.instance()
+    if not app:
+        app = QtGui.QApplication(sys.argv)
+    view1 = PipelineDeveloperView(processing_pipeline, show_sub_pipelines=True)
+    view1.show()
+    app.exec_()
+    del view1
 finally:
     shutil.rmtree(tmp)
