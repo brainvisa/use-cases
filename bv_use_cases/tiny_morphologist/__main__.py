@@ -53,14 +53,6 @@ subjects = (
     'katrina',
     'lyda',
     'melite',
-    'mina',
-    'odalric',
-    'rainbow',
-    'rashn',
-    'shufen',
-    'simona',
-    'svanhildur',
-    'thilini',
     'til',
     'vanessza',
     'victoria'
@@ -106,9 +98,6 @@ try:
     config = {
         'default': {
             'label': 'Local computer',
-            'modules': {}
-        },
-        'remote': {
             'label': 'triscotte',
             'type': 'ssh',
             'host': 'triscotte.cea.fr',
@@ -122,6 +111,8 @@ try:
         # Write a file containing only the version string that will be used
         # by fakespm module to check installation.
         (fakespm / 'fakespm').write_text(version)
+        # Write a fake template file
+        (fakespm / 'template').write_text(f'template of fakespm {version}')
         fakespm_config = {
             'directory': str(fakespm),
             'version': version,
@@ -166,7 +157,7 @@ try:
     for t1_mri in input_dataset.find(suffix='T1w'):
         # Create a TinyMorphologist pipeline
         tiny_morphologist = capsul.executable('bv_use_cases.tiny_morphologist.TinyMorphologist',
-                                              normalization='aims')
+                                              normalization='fakespm')
         # Set the input data
         tiny_morphologist.input = t1_mri['path']
         # Complete outputs following BraiVISA organization
@@ -211,6 +202,8 @@ try:
     #             value = getattr(node, field.name, None)
     #             print('       ', ('<-' if field.is_output() else '->'), field.name, '=', value)
 
+    from pprint import pprint
+    pprint(processing_pipeline.json())
     try:
         with capsul.engine() as ce:
             # Finally execute all the TinyMorphologist instances

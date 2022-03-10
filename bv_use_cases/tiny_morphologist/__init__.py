@@ -26,12 +26,12 @@ class BiasCorrection(Process):
 
 class FakeSPMNormalization(Process):
     input: field(type_=File, extensions=('.nii',))
-    template: field(type_=File, extensions=('.nii',))
+    template: field(type_=File, extensions=('.nii',)) = '!{fakespm.directory}/template'
     output: field(type_=File, write=True, extensions=('.nii',))
     
     requirements = {
         'fakespm': {
-            'version': '12'
+            'version': '8'
         }
     }
     
@@ -45,7 +45,9 @@ class FakeSPMNormalization(Process):
         real_version = (fakespmdir / 'fakespm').read_text().strip()
         with open(self.input) as f:
             content = f.read()
-        content = f'{content}Normalization with fakespm {real_version} installed in {fakespmdir} using template "{self.template}"\n'
+        with open(self.template) as f:
+            template = f.read().strip()
+        content = f'{content}Normalization with fakespm {real_version} installed in {fakespmdir} using template "{template}"\n'
         with open(self.output, 'w') as f:
             f.write(content)
 
