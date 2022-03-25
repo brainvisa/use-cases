@@ -24,13 +24,13 @@ class BiasCorrection(Process):
         brainvisa={'output': {'prefix': 'nobias'}}
     )
 
-class FakeSPMNormalization(Process):
+class SPMNormalization(Process):
     input: field(type_=File, extensions=('.nii',))
-    template: field(type_=File, extensions=('.nii',)) = '!{fakespm.directory}/template'
+    template: field(type_=File, extensions=('.nii',)) = '!{spm.directory}/template'
     output: field(type_=File, write=True, extensions=('.nii',))
     
     requirements = {
-        'fakespm': {
+        'spm': {
             'version': '8'
         }
     }
@@ -41,13 +41,13 @@ class FakeSPMNormalization(Process):
     )
 
     def execute(self, context):
-        fakespmdir = Path(context.fakespm.directory)
-        real_version = (fakespmdir / 'fakespm').read_text().strip()
+        spmdir = Path(context.spm.directory)
+        real_version = (spmdir / 'spm').read_text().strip()
         with open(self.input) as f:
             content = f.read()
         with open(self.template) as f:
             template = f.read().strip()
-        content = f'{content}Normalization with fakespm {real_version} installed in {fakespmdir} using template "{template}"\n'
+        content = f'{content}Normalization with spm {real_version} installed in {spmdir} using template "{template}"\n'
         with open(self.output, 'w') as f:
             f.write(content)
 
@@ -105,8 +105,8 @@ class TinyMorphologist(Pipeline):
     def pipeline_definition(self):
         self.add_process('nobias', BiasCorrection)
 
-        self.add_switch('normalization', ['none', 'fakespm', 'aims'], ['output'])
-        self.add_process('fakespm_normalization', FakeSPMNormalization)
+        self.add_switch('normalization', ['none', 'spm', 'aims'], ['output'])
+        self.add_process('spm_normalization', SPMNormalization)
         self.add_process('aims_normalization', AimsNormalization)
         self.add_process('split', SplitBrain)
         self.add_process('right_hemi', ProcessHemisphere)
@@ -114,8 +114,8 @@ class TinyMorphologist(Pipeline):
 
         self.add_link('nobias.output->normalization.none_switch_output')
         
-        self.add_link('nobias.output->fakespm_normalization.input')
-        self.add_link('fakespm_normalization.output->normalization.fakespm_switch_output')
+        self.add_link('nobias.output->spm_normalization.input')
+        self.add_link('spm_normalization.output->normalization.spm_switch_output')
 
         self.add_link('nobias.output->aims_normalization.input')
         self.add_link('aims_normalization.output->normalization.aims_switch_output')

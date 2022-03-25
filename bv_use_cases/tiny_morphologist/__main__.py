@@ -95,29 +95,34 @@ try:
                     print(f'{data_type} acquisition for subject {subject} acquired in session {session}', file=f)
 
     # Configuration base dictionary
+    #config = {
+        #'default': {
+            #'label': 'Local computer',
+            #'label': 'triscotte',
+            #'type': 'ssh',
+            #'host': 'triscotte.cea.fr',
+            #'modules': {}
+        #}
+    #}
     config = {
-        'default': {
-            'label': 'Local computer',
-            'label': 'triscotte',
-            'type': 'ssh',
-            'host': 'triscotte.cea.fr',
-            'modules': {}
-        }
+        'local': {}
     }
     # Create fake SPM directories
     for version in ('8', '12'):
-        fakespm = tmp / 'software' / f'fakespm-{version}'
-        fakespm.mkdir(parents=True, exist_ok=True)
+        spm = tmp / 'software' / f'spm-{version}'
+        spm.mkdir(parents=True, exist_ok=True)
         # Write a file containing only the version string that will be used
-        # by fakespm module to check installation.
-        (fakespm / 'fakespm').write_text(version)
-        # Write a fake template file
-        (fakespm / 'template').write_text(f'template of fakespm {version}')
-        fakespm_config = {
-            'directory': str(fakespm),
+        # by spm module to check installation.
+        (spm / 'spm').write_text(version)
+        # Write a template file
+        (spm / 'template').write_text(f'template of spm {version}')
+        spm_config = {
+            'directory': str(spm),
             'version': version,
         }
-        config['default']['modules'].setdefault('fakespm', []).append(fakespm_config)
+        config_id = 'spm%s' % version
+        #config['default']['modules'].setdefault('fakespm', []).append(fakespm_config)
+        config['local'].setdefault('spm', {})[config_id] = spm_config
         
 
     # Create a configuration file
@@ -157,7 +162,7 @@ try:
     for t1_mri in input_dataset.find(suffix='T1w'):
         # Create a TinyMorphologist pipeline
         tiny_morphologist = capsul.executable('bv_use_cases.tiny_morphologist.TinyMorphologist',
-                                              normalization='fakespm')
+                                              normalization='spm')
         # Set the input data
         tiny_morphologist.input = t1_mri['path']
         # Complete outputs following BraiVISA organization
@@ -203,7 +208,7 @@ try:
     #             print('       ', ('<-' if field.is_output() else '->'), field.name, '=', value)
 
     from pprint import pprint
-    pprint(processing_pipeline.json())
+    # pprint(processing_pipeline.json())
     try:
         with capsul.engine() as ce:
             # Finally execute all the TinyMorphologist instances
