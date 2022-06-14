@@ -7,19 +7,11 @@ The future [soma-base](https://github.com/populse/soma-base) / [capsul](https://
 
 The simplest is to use a [casa-distro](https://github.com/brainvisa/casa-distro) container for developers, and setup a minimalist dev environment, based on an Ubuntu 22.04 container with singularity.
 
-Please read and follow the instructions there:
+* Please read and follow the instructions there:
 
 [Capsul v3 installation](https://github.com/populse/capsul/tree/pydantic_controller)
 
 
-* When it's ready, you can us it using either:
-
-      bv_use_cases/bin/bv bash
-      bv_use_cases/bin/bv ipython3
-      bv_use_cases/bin/bv python <script>
-
-  You can also set the bv_use_cases/bin directory into your `PATH` configuration.
-
-The main module is `bv_use_cases`:
+* The main module is `bv_use_cases`:
 
     from bv_use_cases import simplest
