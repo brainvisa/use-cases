@@ -14,4 +14,6 @@ The simplest is to use a [casa-distro](https://github.com/brainvisa/casa-distro)
 
 * The main module is `bv_use_cases`:
 
+```
     from bv_use_cases import simplest
+```
